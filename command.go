@@ -88,6 +88,15 @@ type Command struct {
 	// It is a dynamic version of using ValidArgs.
 	// Only one of ValidArgs and ValidArgsFunction can be used for a command.
 	ValidArgsFunction CompletionFunc
+	// ValidFlagsFunction is an optional function that provides valid flag arguments for shell
+	// completion. Use this to override what Cobra generates by default. Suppressing a
+	// flag when certain arguments are present is one use case for this function, or if you need
+	// to customize what flags get offered due to other conditions.
+	// Do not confuse this field with calls to RegisterFlagCompletionFunc
+	// which handle completion for flag arguments (values after the '=').
+	// Note: The CompletionOptions field CommingleArgsAndFlags option can be particularly useful
+	// when using this function.
+	ValidFlagsFunction CompletionFunc
 
 	// Expected arguments
 	Args PositionalArgs

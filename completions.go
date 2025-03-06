@@ -115,6 +115,10 @@ type CompletionOptions struct {
 	DisableDescriptions bool
 	// HiddenDefaultCmd makes the default 'completion' command hidden
 	HiddenDefaultCmd bool
+	// CommingleArgsAndFlags commingles arguments and flags in the completion script
+	// Only comes into play when when the completion target is blank, if the completion target
+	// starts with a "-" then it will return flags, otherwise it will return arguments.
+	CommingleArgsAndFlags bool
 }
 
 // Completion is a string that can be used for completions
