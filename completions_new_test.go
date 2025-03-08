@@ -44,13 +44,69 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 			CommingleArgsAndFlags: true,
 		},
 	}
+	childCmd3 := &Command{
+		Use:       "childCmd3",
+		Short:     "third command - no modifiers",
+		ValidArgs: []string{"arg1", "arg2"},
+		Run:       emptyRun,
+	}
+	childCmd4 := &Command{
+		Use:       "childCmd4",
+		Short:     "fourth command - Show all flags",
+		ValidArgs: []string{"arg1", "arg2"},
+		Run:       emptyRun,
+		CompletionOptions: CompletionOptions{
+			ShowAllFlags: true,
+		},
+	}
+	childCmd5 := &Command{
+		Use:       "childCmd5",
+		Short:     "fifth command - commingle args and flags",
+		ValidArgs: []string{"arg1", "arg2"},
+		Run:       emptyRun,
+		CompletionOptions: CompletionOptions{
+			CommingleArgsAndFlags: true,
+		},
+	}
+	childCmd6 := &Command{
+		Use:       "childCmd6",
+		Short:     "sixth command - both",
+		ValidArgs: []string{"arg1", "arg2"},
+		Run:       emptyRun,
+		CompletionOptions: CompletionOptions{
+			ShowAllFlags:          true,
+			CommingleArgsAndFlags: true,
+		},
+	}
+
 	rootCmd.AddCommand(childCmd)
 	rootCmd.AddCommand(childCmd2)
+	rootCmd.AddCommand(childCmd3)
+	rootCmd.AddCommand(childCmd4)
+	rootCmd.AddCommand(childCmd5)
+	rootCmd.AddCommand(childCmd6)
 
 	rootCmd.Flags().IntP("first", "f", -1, "first flag\nlonger description for flag")
 	rootCmd.PersistentFlags().BoolP("second", "s", false, "second flag")
+	rootCmd.PersistentFlags().BoolP("third", "t", false, "third flag required")
+	rootCmd.Flags().IntP("fourth", "4", -1, "fourth flag\nfourth flag required")
+	rootCmd.MarkFlagRequired("third")
+	rootCmd.MarkFlagRequired("fourth")
+
 	childCmd.Flags().String("subFlag", "", "sub flag")
 	childCmd2.Flags().String("subFlag2", "", "sub flag2")
+	childCmd3.Flags().String("notrequired", "n", "sub flag3 not required")
+	childCmd3.Flags().String("required", "r", "sub flag3 required")
+	childCmd3.MarkFlagRequired("required")
+	childCmd4.Flags().String("notrequired", "n", "sub flag4 not required")
+	childCmd4.Flags().String("required", "r", "sub flag4 required")
+	childCmd4.MarkFlagRequired("required")
+	childCmd5.Flags().String("notrequired", "n", "sub flag5 not required")
+	childCmd5.Flags().String("required", "r", "sub flag5 required")
+	childCmd5.MarkFlagRequired("required")
+	childCmd6.Flags().String("notrequired", "n", "sub flag6 not required")
+	childCmd6.Flags().String("required", "r", "sub flag6 required")
+	childCmd6.MarkFlagRequired("required")
 
 	// Test that flag names are not shown if the user has not given the '-' prefix
 	output, err := executeCommand(rootCmd, ShellCompRequestCmd, "")
@@ -61,6 +117,10 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 	expected := strings.Join([]string{
 		"childCmd\tfirst command",
 		"childCmd2\tsecond command",
+		"childCmd3\tthird command - no modifiers",
+		"childCmd4\tfourth command - Show all flags",
+		"childCmd5\tfifth command - commingle args and flags",
+		"childCmd6\tsixth command - both",
 		"completion\tGenerate the autocompletion script for the specified shell",
 		"help\tHelp about any command",
 		":4",
@@ -83,6 +143,8 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 		"-h\thelp for root",
 		"--second\tsecond flag",
 		"-s\tsecond flag",
+		"--third\tthird flag required",
+		"-t\tthird flag required",
 		":4",
 		"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n")
 
@@ -114,6 +176,8 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 	expected = strings.Join([]string{
 		"--second\tsecond flag",
 		"-s\tsecond flag",
+		"--third\tthird flag required",
+		"-t\tthird flag required",
 		"--help\thelp for childCmd",
 		"-h\thelp for childCmd",
 		"--subFlag\tsub flag",
@@ -135,6 +199,8 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 	expected = strings.Join([]string{
 		"--second\tsecond flag",
 		"-s\tsecond flag",
+		"--third\tthird flag required",
+		"-t\tthird flag required",
 		"--help\thelp for childCmd2",
 		"-h\thelp for childCmd2",
 		"--subFlag2\tsub flag2",
@@ -176,5 +242,269 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 
 	if output != expected {
 		t.Errorf("expected: %q, got: %q", expected, output)
+	}
+
+	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "childCmd3", "")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected = strings.Join([]string{
+		"--required\tsub flag3 required",
+		"arg1",
+		"arg2",
+		":4",
+		"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n")
+
+	if output != expected {
+		t.Errorf("expected: %q, got: %q", expected, output)
+	}
+
+	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "childCmd3", "-")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected = strings.Join([]string{
+		"--required\tsub flag3 required",
+		":4",
+		"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n")
+
+	if output != expected {
+		t.Errorf("expected: %q, got: %q", expected, output)
+	}
+
+	output, err = executeCommand(rootCmd, ShellCompRequestCmd, "childCmd3", "a")
+	if err != nil {
+		t.Errorf("Unexpected error: %v", err)
+	}
+
+	expected = strings.Join([]string{
+		"arg1",
+		"arg2",
+		":4",
+		"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n")
+
+	if output != expected {
+		t.Errorf("expected: %q, got: %q", expected, output)
+	}
+}
+
+func TestCompletionFlagBehaviorNormal(t *testing.T) {
+
+	getCmd := func(setRequired bool) *Command {
+		rootCmd := &Command{
+			Use: "root",
+			Run: emptyRun,
+		}
+		childCmd := &Command{
+			Use: "child",
+			Run: emptyRun,
+		}
+		rootCmd.AddCommand(childCmd)
+
+		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
+		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
+		rootCmd.Flags().Bool("flag1", false, "flag1")
+		rootCmd.Flags().Bool("flag2", false, "flag2")
+
+		childCmd.PersistentFlags().Int("pchflag1", -1, "pchflag1")
+		childCmd.PersistentFlags().Int("pchflag2", -2, "pchflag2")
+		childCmd.Flags().Bool("chflag1", false, "chflag1")
+		childCmd.Flags().Bool("chflag2", false, "chflag2")
+
+		if setRequired {
+			rootCmd.MarkFlagRequired("pflag1")
+			rootCmd.MarkFlagRequired("flag1")
+
+			childCmd.MarkFlagRequired("pchflag1")
+			childCmd.MarkFlagRequired("chflag1")
+		}
+
+		return rootCmd
+	}
+
+	testcases := []struct {
+		name                string
+		input               []string
+		expectedNotRequired string
+		expectedRequired    string
+	}{
+		{
+			name:  "blank",
+			input: []string{""},
+			expectedNotRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete subcommand 'c'",
+			input: []string{"c"},
+			expectedNotRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-'",
+			input: []string{"-"},
+			expectedNotRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '--'",
+			input: []string{"--"},
+			expectedNotRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--help\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child command incomplete",
+			input: []string{"child"},
+			expectedNotRequired: strings.Join([]string{
+				"child",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"child",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child command",
+			input: []string{"child", ""},
+			expectedNotRequired: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete subsommand 'c'",
+			input: []string{"child", "c"},
+			expectedNotRequired: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-'",
+			input: []string{"child", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '--'",
+			input: []string{"child", "--"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+	}
+
+	for _, tc := range testcases {
+
+		// required set to false
+		t.Run(tc.name+"_Not_Required", func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Version     : no Flags Set Required")
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(false), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if output != tc.expectedNotRequired {
+				t.Logf("Expected:\n%+v", tc.expectedNotRequired)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			}
+
+		})
+
+		// required set to true
+		t.Run(tc.name+"s_Required", func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Version     : Flag1 Set Required")
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(true), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if output != tc.expectedRequired {
+				t.Logf("Expected:\n%+v", tc.expectedRequired)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			}
+		})
 	}
 }

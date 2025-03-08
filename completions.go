@@ -115,6 +115,11 @@ type CompletionOptions struct {
 	DisableDescriptions bool
 	// HiddenDefaultCmd makes the default 'completion' command hidden
 	HiddenDefaultCmd bool
+	// ShowAllFlags shows all visible flags in the completion script
+	// The default behavior is to only show 'required' flags if any exist, if none
+	// exist then all flags are shown.  This option overrides that behavior and always
+	// shows all flags.
+	ShowAllFlags bool
 	// CommingleArgsAndFlags commingles arguments and flags in the completion script
 	// Only comes into play when when the completion target is blank, if the completion target
 	// starts with a "-" then it will return flags, otherwise it will return arguments.
@@ -438,34 +443,7 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 
 		// If we have not found any required flags, only then can we show regular flags
 		if len(completions) == 0 {
-			doCompleteFlags := func(flag *pflag.Flag) {
-				_, acceptsMultiple := flag.Value.(SliceValue)
-				acceptsMultiple = acceptsMultiple ||
-					strings.Contains(flag.Value.Type(), "Slice") ||
-					strings.Contains(flag.Value.Type(), "Array") ||
-					strings.HasPrefix(flag.Value.Type(), "stringTo")
-
-				if !flag.Changed || acceptsMultiple {
-					// If the flag is not already present, or if it can be specified multiple times (Array, Slice, or stringTo)
-					// we suggest it as a completion
-					completions = append(completions, getFlagNameCompletions(flag, toComplete)...)
-				}
-			}
-
-			// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
-			// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
-			// non-inherited flags.
-			finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
-				doCompleteFlags(flag)
-			})
-			// Try to complete non-inherited flags even if DisableFlagParsing==true.
-			// This allows programs to tell Cobra about flags for completion even
-			// if the actual parsing of flags is not done by Cobra.
-			// For instance, Helm uses this to provide flag name completion for
-			// some of its plugins.
-			finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
-				doCompleteFlags(flag)
-			})
+			completions = completeAllFlags(finalCmd, toComplete)
 		}
 
 		directive = ShellCompDirectiveNoFileComp
@@ -635,6 +613,41 @@ func completeRequireFlags(finalCmd *Command, toComplete string) []Completion {
 	})
 	finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
 		doCompleteRequiredFlags(flag)
+	})
+
+	return completions
+}
+
+func completeAllFlags(finalCmd *Command, toComplete string) []Completion {
+	var completions []Completion
+
+	doCompleteFlags := func(flag *pflag.Flag) {
+		_, acceptsMultiple := flag.Value.(SliceValue)
+		acceptsMultiple = acceptsMultiple ||
+			strings.Contains(flag.Value.Type(), "Slice") ||
+			strings.Contains(flag.Value.Type(), "Array") ||
+			strings.HasPrefix(flag.Value.Type(), "stringTo")
+
+		if !flag.Changed || acceptsMultiple {
+			// If the flag is not already present, or if it can be specified multiple times (Array, Slice, or stringTo)
+			// we suggest it as a completion
+			completions = append(completions, getFlagNameCompletions(flag, toComplete)...)
+		}
+	}
+
+	// We cannot use finalCmd.Flags() because we may not have called ParsedFlags() for commands
+	// that have set DisableFlagParsing; it is ParseFlags() that merges the inherited and
+	// non-inherited flags.
+	finalCmd.InheritedFlags().VisitAll(func(flag *pflag.Flag) {
+		doCompleteFlags(flag)
+	})
+	// Try to complete non-inherited flags even if DisableFlagParsing==true.
+	// This allows programs to tell Cobra about flags for completion even
+	// if the actual parsing of flags is not done by Cobra.
+	// For instance, Helm uses this to provide flag name completion for
+	// some of its plugins.
+	finalCmd.NonInheritedFlags().VisitAll(func(flag *pflag.Flag) {
+		doCompleteFlags(flag)
 	})
 
 	return completions
