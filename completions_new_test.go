@@ -292,7 +292,7 @@ func TestCommingleArgsAndFlags(t *testing.T) {
 
 func TestCompletionFlagBehaviorNormal(t *testing.T) {
 
-	getCmd := func(setRequired bool) *Command {
+	getCmd := func(setRequired bool, mutuallyExclusive bool) *Command {
 		rootCmd := &Command{
 			Use: "root",
 			Run: emptyRun,
@@ -305,30 +305,48 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 
 		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
 		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
+		rootCmd.PersistentFlags().Int("pflag3", -3, "pflag3")
 		rootCmd.Flags().Bool("flag1", false, "flag1")
 		rootCmd.Flags().Bool("flag2", false, "flag2")
+		rootCmd.Flags().Bool("flag3", false, "flag3")
 
 		childCmd.PersistentFlags().Int("pchflag1", -1, "pchflag1")
 		childCmd.PersistentFlags().Int("pchflag2", -2, "pchflag2")
+		childCmd.PersistentFlags().Int("pchflag3", -3, "pchflag3")
+
 		childCmd.Flags().Bool("chflag1", false, "chflag1")
 		childCmd.Flags().Bool("chflag2", false, "chflag2")
+		childCmd.Flags().Bool("chflag3", false, "chflag3")
 
 		if setRequired {
-			rootCmd.MarkFlagRequired("pflag1")
+			rootCmd.MarkPersistentFlagRequired("pflag1")
 			rootCmd.MarkFlagRequired("flag1")
 
-			childCmd.MarkFlagRequired("pchflag1")
+			childCmd.MarkPersistentFlagRequired("pchflag1")
 			childCmd.MarkFlagRequired("chflag1")
 		}
+		if mutuallyExclusive {
+			rootCmd.MarkFlagsMutuallyExclusive("pflag1", "pflag2")
+			rootCmd.MarkFlagsMutuallyExclusive("flag1", "flag2")
+
+			childCmd.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
+			childCmd.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
+		}
+		//rootCmd.MarkFlagsMutuallyExclusive()
+
+		//rootCmd.MarkFlagsOneRequired()
+		//rootCmd.MarkFlagsRequiredTogether("flag1", "flag2")
 
 		return rootCmd
 	}
 
 	testcases := []struct {
-		name                string
-		input               []string
-		expectedNotRequired string
-		expectedRequired    string
+		name                   string
+		input                  []string
+		expectedNotRequired    string
+		expectedRequired       string
+		expectedMutual         string
+		expectedMutualRequired string
 	}{
 		{
 			name:  "blank",
@@ -344,6 +362,21 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
 				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
@@ -360,6 +393,16 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 				"completion\tGenerate the autocompletion script for the specified shell",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"child",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
 		{
 			name:  "incomplete flag '-'",
@@ -367,14 +410,33 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			expectedNotRequired: strings.Join([]string{
 				"--flag1\tflag1",
 				"--flag2\tflag2",
+				"--flag3\tflag3",
 				"--help\thelp for root",
 				"-h\thelp for root",
 				"--pflag1\tpflag1",
 				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 			expectedRequired: strings.Join([]string{
 				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
@@ -384,13 +446,225 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			expectedNotRequired: strings.Join([]string{
 				"--flag1\tflag1",
 				"--flag2\tflag2",
+				"--flag3\tflag3",
 				"--help\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with local --flag1",
+			input: []string{"--flag1", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with persistent --pflag1",
+			input: []string{"--pflag1", "1", "-"},
+			expectedNotRequired: strings.Join([]string{ //TODO this does not seem right
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with local --flag2",
+			input: []string{"--flag2", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with persistent --pflag2",
+			input: []string{"--pflag2", "2", "-"},
+			expectedNotRequired: strings.Join([]string{ //TODO this does not seem right
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with local --flag3",
+			input: []string{"--flag3", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag '-' with persistent --pflag3",
+			input: []string{"--pflag3", "3", "-"},
+			expectedNotRequired: strings.Join([]string{ //TODO this does not seem right
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
 				"--pflag1\tpflag1",
 				"--pflag2\tpflag2",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 			expectedRequired: strings.Join([]string{
 				"--flag1\tflag1",
+				"--pflag1\tpflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--flag1\tflag1",
+				"--flag2\tflag2",
+				"--flag3\tflag3",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--flag1\tflag1",
+				"--pflag1\tpflag1",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
@@ -405,6 +679,14 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 				"child",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"child",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"child",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
 		{
 			name:  "child command",
@@ -413,7 +695,18 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 				":0",
 				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
 			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
 				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
 				":0",
 				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
 		},
@@ -426,6 +719,12 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			expectedRequired: strings.Join([]string{
 				":0",
 				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				":0",
+				"Completion ended with directive: ShellCompDirectiveDefault", ""}, "\n"),
 		},
 		{
 			name:  "child incomplete flag '-'",
@@ -433,16 +732,41 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			expectedNotRequired: strings.Join([]string{
 				"--pflag1\tpflag1",
 				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
 				"--chflag1\tchflag1",
 				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
 				"--help\thelp for child",
 				"-h\thelp for child",
 				"--pchflag1\tpchflag1",
 				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
 				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
@@ -452,15 +776,281 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			expectedNotRequired: strings.Join([]string{
 				"--pflag1\tpflag1",
 				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
 				"--chflag1\tchflag1",
 				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
 				"--help\thelp for child",
 				"--pchflag1\tpchflag1",
 				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag1 post child",
+			input: []string{"child", "--pflag1", "1", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 			expectedRequired: strings.Join([]string{
 				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag2 post child",
+			input: []string{"child", "--pflag2", "2", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag3 post child",
+			input: []string{"child", "--pflag3", "3", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag1 pre child",
+			input: []string{"--pflag1", "1", "child", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag2 pre child",
+			input: []string{"--pflag2", "2", "child", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "child incomplete flag '-' with persistent --pflag3 pre child",
+			input: []string{"--pflag3", "3", "child", "-"},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--chflag3\tchflag3",
+				"--help\thelp for child",
+				"-h\thelp for child",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--chflag1\tchflag1",
+				"--pchflag1\tpchflag1",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},
@@ -475,7 +1065,7 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			t.Logf("Version     : no Flags Set Required")
 			t.Logf("Input       : %v", tc.input)
 
-			output, err := executeCommand(getCmd(false), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			output, err := executeCommand(getCmd(false, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
@@ -495,13 +1085,51 @@ func TestCompletionFlagBehaviorNormal(t *testing.T) {
 			t.Logf("Version     : Flag1 Set Required")
 			t.Logf("Input       : %v", tc.input)
 
-			output, err := executeCommand(getCmd(true), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			output, err := executeCommand(getCmd(true, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
 				t.Errorf("Unexpected error: %v", err)
 			}
 
 			if output != tc.expectedRequired {
 				t.Logf("Expected:\n%+v", tc.expectedRequired)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			}
+		})
+
+		// mutual set to true
+		t.Run(tc.name+"s_Mutual", func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Version     : Flag1 Set Mutually Exclusive")
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(false, true), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if output != tc.expectedMutual {
+				t.Logf("Expected:\n%+v", tc.expectedMutual)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			}
+		})
+
+		// mutual & Required set to true
+		t.Run(tc.name+"s_Mutual_Required", func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Version     : Flag1 Set Mutually Exclusive & Required")
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(true, true), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Errorf("Unexpected error: %v", err)
+			}
+
+			if output != tc.expectedMutualRequired {
+				t.Logf("Expected:\n%+v", tc.expectedMutualRequired)
 				t.Logf("Got:\n%+v", output)
 				t.Fail()
 			}
