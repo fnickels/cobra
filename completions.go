@@ -374,7 +374,6 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 
 	//get the completion behaviors for the command
 	behaviors := finalCmd.getCompletionBehavior()
-	fmt.Printf("behaviors: %v\n", behaviors)
 
 	// These flags are normally added when `execute()` is called on `finalCmd`,
 	// however, when doing completion, we don't call `finalCmd.execute()`.
