@@ -120,24 +120,21 @@ type CompletionOptions struct {
 type CompletionFlagVerbosity int
 
 const (
-	// MinimalFlagDisplayMode displays only the flags that are required
+	// MinimalFlags displays only the flags that are required
 	// for the command to run.  If no flags are required, then all flags
-	// are displayed, if completing a flag (completion string must start with a'-').
-	// Order of precedence is:
-	//   1. RequiredTogether groupings  MarkFlagsRequiredTogether()
-	//   2. Required flags  MarkFlagRequired() & MarkPersistentFlagRequired()
-	//   3. All flags (only when completing flags)
+	// are displayed when completing a flag (completion string must start
+	// with a '-'), and only required flags when completing a blank completion.
+	// No flags are shown on blank completions if none are required.
+	//   Required Flags:
+	//      * RequiredTogether groupings when one flag in th group is set  -  MarkFlagsRequiredTogether()
+	//	    * One Required grouping  -  MarkFlagsOneRequired()
+	//      * Required flags  -  MarkFlagRequired() & MarkPersistentFlagRequired()
 	// Default behavior
 	MinimalFlags CompletionFlagVerbosity = iota
-	// MinimalRequiredFlagDisplayMode displays required flags
-	// for the command to run.  If no flags are required, then all flags
-	// are displayed, if completing a flag (completion string must start with a'-').
-	// Order of precedence is:
-	//   1. RequiredTogether groupings & Required flags MarkFlagsRequiredTogether(), MarkFlagRequired() & MarkPersistentFlagRequired()
-	//   2. All flags (only when completing flags)
-	MinimalRequiredFlags
-	// AllFlagsDisplayMode displays all flags available for the command.  For both flag completion (completion string
-	// starts with a '-') and completions where the completion string is blank.  (arguments commingled with flags)
+	// MoreVerboseFlags displays all flags that are available when completing a flag, and only
+	// required flags when completing a blank completion.
+	MoreVerboseFlags
+	// AllFlags displays all available flags for both blank completions and flag completions.
 	AllFlags
 )
 
@@ -472,8 +469,8 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
 		switch behaviors.FlagVerbosity {
 		case MinimalFlags:
-			completions = completeRequireFlags(finalCmd, toComplete)
-		case MinimalRequiredFlags:
+			fallthrough
+		case MoreVerboseFlags:
 			completions = completeRequireFlags(finalCmd, toComplete)
 		}
 
@@ -527,8 +524,15 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 				}
 			}
 
-			// Complete required flags even without the '-' prefix
-			completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
+			// Complete flags based on the set behavior
+			switch behaviors.FlagVerbosity {
+			case MinimalFlags:
+				fallthrough
+			case MoreVerboseFlags:
+				completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
+			case AllFlags:
+				completions = append(completions, completeAllFlags(finalCmd, toComplete)...)
+			}
 
 			// Always complete ValidArgs, even if we are completing a subcommand name.
 			// This is for commands that have both subcommands and ValidArgs.
