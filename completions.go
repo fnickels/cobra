@@ -103,7 +103,7 @@ const (
 	compCmdNoDescFlagDefault = false
 )
 
-type CompletionFlagDisplayMode int
+type CompletionFlagVerbosity int
 
 const (
 	// MinimalFlagDisplayMode displays only the flags that are required
@@ -114,17 +114,17 @@ const (
 	//   2. Required flags  MarkFlagRequired() & MarkPersistentFlagRequired()
 	//   3. All flags (only when completing flags)
 	// Default behavior
-	MinimalFlagDisplayMode CompletionFlagDisplayMode = iota
+	MinimalFlags CompletionFlagVerbosity = iota
 	// MinimalRequiredFlagDisplayMode displays required flags
 	// for the command to run.  If no flags are required, then all flags
 	// are displayed, if completing a flag (completion string must start with a'-').
 	// Order of precedence is:
 	//   1. RequiredTogether groupings & Required flags MarkFlagsRequiredTogether(), MarkFlagRequired() & MarkPersistentFlagRequired()
 	//   2. All flags (only when completing flags)
-	MinimalRequiredFlagDisplayMode
+	MinimalRequiredFlags
 	// AllFlagsDisplayMode displays all flags available for the command.  For both flag completion (completion string
 	// starts with a '-') and completions where the completion string is blank.  (arguments commingled with flags)
-	AllFlagDisplayMode
+	AllFlags
 )
 
 // CompletionOptions are the options to control shell completion
@@ -140,10 +140,10 @@ type CompletionOptions struct {
 	// HiddenDefaultCmd makes the default 'completion' command hidden
 	HiddenDefaultCmd bool
 	// FlagVerbosity controls the verbosity of flags in the completion script. The default
-	// is MinimalFlagDisplayMode, which only shows required flags if any exist, if none
-	// arerequired then all flags are shown when completing a flag, but not on a blank completion.
+	// is MinimalFlags, which only shows required flags if any exist, if none
+	// are required then all flags are shown when completing a flag, but not on a blank completion.
 	// Other settings allow for more flags to be shown under different conditions
-	FlagVerbosity CompletionFlagDisplayMode
+	FlagVerbosity CompletionFlagVerbosity
 	// ShowAllFlags shows all visible flags in the completion script
 	// The default behavior is to only show 'required' flags if any exist, if none
 	// exist then all flags are shown.  This option overrides that behavior and always
