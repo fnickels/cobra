@@ -468,13 +468,15 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
 		switch behaviors.FlagVerbosity {
 		case MinimalFlags:
+			completions = completeRequireFlags(finalCmd, toComplete)
+			// If we have not found any required flags, then show all available flags
+			if len(completions) > 0 {
+				break
+			}
 			fallthrough
 		case MoreVerboseFlags:
-			completions = completeRequireFlags(finalCmd, toComplete)
-		}
-
-		// If we have not found any required flags, only then can we show regular flags
-		if len(completions) == 0 || behaviors.FlagVerbosity == AllFlags {
+			fallthrough
+		case AllFlags:
 			completions = completeAllFlags(finalCmd, toComplete)
 		}
 
