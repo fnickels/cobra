@@ -216,6 +216,9 @@ type Command struct {
 	// CompletionOptions is a set of options to control the handling of shell completion
 	CompletionOptions CompletionOptions
 
+	// CompletionBehaviors is a set of options to control the behavior of shell completion
+	CompletionBehaviors *CompletionBehaviors
+
 	// commandsAreSorted defines, if command slice are sorted or not.
 	commandsAreSorted bool
 	// commandCalledAs is the name or alias value used to call this command.

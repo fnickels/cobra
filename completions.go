@@ -103,6 +103,20 @@ const (
 	compCmdNoDescFlagDefault = false
 )
 
+// CompletionOptions are the options to control shell completion
+type CompletionOptions struct {
+	// DisableDefaultCmd prevents Cobra from creating a default 'completion' command
+	DisableDefaultCmd bool
+	// DisableNoDescFlag prevents Cobra from creating the '--no-descriptions' flag
+	// for shells that support completion descriptions
+	DisableNoDescFlag bool
+	// DisableDescriptions turns off all completion descriptions for shells
+	// that support them
+	DisableDescriptions bool
+	// HiddenDefaultCmd makes the default 'completion' command hidden
+	HiddenDefaultCmd bool
+}
+
 type CompletionFlagVerbosity int
 
 const (
@@ -127,32 +141,17 @@ const (
 	AllFlags
 )
 
-// CompletionOptions are the options to control shell completion
-type CompletionOptions struct {
-	// DisableDefaultCmd prevents Cobra from creating a default 'completion' command
-	DisableDefaultCmd bool
-	// DisableNoDescFlag prevents Cobra from creating the '--no-descriptions' flag
-	// for shells that support completion descriptions
-	DisableNoDescFlag bool
-	// DisableDescriptions turns off all completion descriptions for shells
-	// that support them
-	DisableDescriptions bool
-	// HiddenDefaultCmd makes the default 'completion' command hidden
-	HiddenDefaultCmd bool
+type CompletionBehaviors struct {
 	// FlagVerbosity controls the verbosity of flags in the completion script. The default
 	// is MinimalFlags, which only shows required flags if any exist, if none
 	// are required then all flags are shown when completing a flag, but not on a blank completion.
 	// Other settings allow for more flags to be shown under different conditions
 	FlagVerbosity CompletionFlagVerbosity
-	// ShowAllFlags shows all visible flags in the completion script
-	// The default behavior is to only show 'required' flags if any exist, if none
-	// exist then all flags are shown.  This option overrides that behavior and always
-	// shows all flags.
-	ShowAllFlags bool
-	// CommingleArgsAndFlags commingles arguments and flags in the completion script
-	// Only comes into play when when the completion target is blank, if the completion target
-	// starts with a "-" then it will return flags, otherwise it will return arguments.
-	CommingleArgsAndFlags bool
+	// DoNotInherit indicates this set of settings should not be inherited by subcommands
+	// if a subcommand does not have a CompletionBehavior set, it will inherit from its parent.
+	// if the parent has DoNotInherit set, the subcommand will skip to the parent's parent,
+	// if none is found use the default settings.
+	DoNotInherit bool
 }
 
 // Completion is a string that can be used for completions
@@ -376,6 +375,10 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	}
 	finalCmd.ctx = c.ctx
 
+	//get the completion behaviors for the command
+	behaviors := finalCmd.getCompletionBehavior()
+	fmt.Printf("behaviors: %v\n", behaviors)
+
 	// These flags are normally added when `execute()` is called on `finalCmd`,
 	// however, when doing completion, we don't call `finalCmd.execute()`.
 	// Let's add the --help and --version flag ourselves but only if the finalCmd
@@ -467,11 +470,15 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	// a '-' we know it is a flag.  We cannot use isFlagArg() here as it requires
 	// the flag name to be complete
 	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
-		// First check for required flags
-		completions = completeRequireFlags(finalCmd, toComplete)
+		switch behaviors.FlagVerbosity {
+		case MinimalFlags:
+			completions = completeRequireFlags(finalCmd, toComplete)
+		case MinimalRequiredFlags:
+			completions = completeRequireFlags(finalCmd, toComplete)
+		}
 
 		// If we have not found any required flags, only then can we show regular flags
-		if len(completions) == 0 {
+		if len(completions) == 0 || behaviors.FlagVerbosity == AllFlags {
 			completions = completeAllFlags(finalCmd, toComplete)
 		}
 
@@ -1048,4 +1055,24 @@ func getEnvConfig(cmd *Command, suffix string) string {
 		v = os.Getenv(configEnvVar(configEnvVarGlobalPrefix, suffix))
 	}
 	return v
+}
+
+func (c *Command) getCompletionBehavior() *CompletionBehaviors {
+
+	if c.CompletionBehaviors != nil {
+		return c.CompletionBehaviors
+	}
+
+	next := c.Parent()
+	for next != nil {
+		if next.CompletionBehaviors != nil {
+			if !next.CompletionBehaviors.DoNotInherit {
+				return next.CompletionBehaviors
+			}
+		}
+		next = next.Parent()
+	}
+
+	// default if not set
+	return &CompletionBehaviors{}
 }
