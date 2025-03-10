@@ -94,7 +94,7 @@ type Command struct {
 	// to customize what flags get offered due to other conditions.
 	// Do not confuse this field with calls to RegisterFlagCompletionFunc
 	// which handle completion for flag arguments (values after the '=').
-	// Note: The CompletionOptions field CommingleArgsAndFlags option can be particularly useful
+	// Note: The CompletionBehaviors field can be particularly useful
 	// when using this function.
 	ValidFlagsFunction CompletionFunc
 
