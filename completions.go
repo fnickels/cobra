@@ -466,18 +466,22 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	// a '-' we know it is a flag.  We cannot use isFlagArg() here as it requires
 	// the flag name to be complete
 	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
-		switch behaviors.FlagVerbosity {
-		case MinimalFlags:
-			completions = completeRequireFlags(finalCmd, toComplete)
-			// If we have not found any required flags, then show all available flags
-			if len(completions) > 0 {
-				break
+		if finalCmd.ValidFlagsFunction != nil {
+			completions, directive = finalCmd.ValidFlagsFunction(finalCmd, finalArgs, toComplete)
+		} else {
+			switch behaviors.FlagVerbosity {
+			case MinimalFlags:
+				completions = completeRequireFlags(finalCmd, toComplete)
+				// If we have not found any required flags, then show all available flags
+				if len(completions) > 0 {
+					break
+				}
+				fallthrough
+			case MoreVerboseFlags:
+				fallthrough
+			case AllFlags:
+				completions = completeAllFlags(finalCmd, toComplete)
 			}
-			fallthrough
-		case MoreVerboseFlags:
-			fallthrough
-		case AllFlags:
-			completions = completeAllFlags(finalCmd, toComplete)
 		}
 
 		directive = ShellCompDirectiveNoFileComp
