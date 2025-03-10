@@ -21,6 +21,8 @@ import (
 
 func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
+	t.Parallel()
+
 	getCmd := func(
 		setRequired bool,
 		mutuallyExclusive bool,
@@ -1771,6 +1773,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// required set to false
 		t.Run(tc.name+"_Not_Required", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : no Flags Set Required")
@@ -1791,6 +1794,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// required set to true
 		t.Run(tc.name+"s_Required", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 Set Required")
@@ -1810,6 +1814,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// mutual set to true
 		t.Run(tc.name+"s_Mutual", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive")
@@ -1829,6 +1834,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// mutual & Required set to true
 		t.Run(tc.name+"s_Mutual_Required", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive & Flag 1 Set Required")
@@ -1848,6 +1854,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// OneRequired set to true
 		t.Run(tc.name+"s_OneRequired", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set One Required")
@@ -1867,6 +1874,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// mutual & OneRequired set to true
 		t.Run(tc.name+"s_Mutual_OneRequired", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive & OneRequired")
@@ -1886,6 +1894,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// Required Together set to true
 		t.Run(tc.name+"s_RequiredTogether", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 3 Set Required Together")
@@ -1905,6 +1914,7 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 
 		// Required Together and Required set to true
 		t.Run(tc.name+"s_RequiredTogether_Required", func(t *testing.T) {
+			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 3 Set Required Together & Flag 1 Set Required")
