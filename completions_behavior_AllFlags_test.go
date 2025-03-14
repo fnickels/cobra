@@ -42,6 +42,12 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 			Run: emptyRun,
 		}
 		rootCmd.AddCommand(childCmd)
+		childCmd2 := &Command{
+			Use:       "secondchild",
+			Run:       emptyRun,
+			ValidArgs: []string{"arg1", "arg2", "arg3"},
+		}
+		rootCmd.AddCommand(childCmd2)
 
 		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
 		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
@@ -58,12 +64,23 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 		childCmd.Flags().Bool("chflag2", false, "chflag2")
 		childCmd.Flags().Bool("chflag3", false, "chflag3")
 
+		childCmd2.PersistentFlags().Int("pchflag1", -1, "pchflag1")
+		childCmd2.PersistentFlags().Int("pchflag2", -2, "pchflag2")
+		childCmd2.PersistentFlags().Int("pchflag3", -3, "pchflag3")
+
+		childCmd2.Flags().Bool("chflag1", false, "chflag1")
+		childCmd2.Flags().Bool("chflag2", false, "chflag2")
+		childCmd2.Flags().Bool("chflag3", false, "chflag3")
+
 		if setRequired {
 			rootCmd.MarkPersistentFlagRequired("pflag1")
 			rootCmd.MarkFlagRequired("flag1")
 
 			childCmd.MarkPersistentFlagRequired("pchflag1")
 			childCmd.MarkFlagRequired("chflag1")
+
+			childCmd2.MarkPersistentFlagRequired("pchflag1")
+			childCmd2.MarkFlagRequired("chflag1")
 		}
 
 		if mutuallyExclusive {
@@ -72,6 +89,9 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 
 			childCmd.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
 			childCmd.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
+
+			childCmd2.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
+			childCmd2.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
 		}
 
 		if oneRequired {
@@ -80,6 +100,9 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 
 			childCmd.MarkFlagsOneRequired("pchflag1", "pchflag2")
 			childCmd.MarkFlagsOneRequired("chflag1", "chflag2")
+
+			childCmd2.MarkFlagsOneRequired("pchflag1", "pchflag2")
+			childCmd2.MarkFlagsOneRequired("chflag1", "chflag2")
 		}
 
 		if requiredTogether {
@@ -88,6 +111,9 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 
 			childCmd.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
 			childCmd.MarkFlagsRequiredTogether("chflag1", "chflag3")
+
+			childCmd2.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
+			childCmd2.MarkFlagsRequiredTogether("chflag1", "chflag3")
 		}
 
 		return rootCmd
@@ -112,6 +138,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -126,6 +153,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -140,6 +168,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -154,6 +183,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -168,6 +198,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -182,6 +213,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -196,6 +228,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -210,6 +243,7 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"child",
 				"completion\tGenerate the autocompletion script for the specified shell",
 				"help\tHelp about any command",
+				"secondchild",
 				"--flag1\tflag1",
 				"--flag2\tflag2",
 				"--flag3\tflag3",
@@ -2606,6 +2640,138 @@ func TestCompletionFlagBehaviorAllFlags(t *testing.T) {
 				"--pchflag1\tpchflag1",
 				"--pchflag2\tpchflag2",
 				"--pchflag3\tpchflag3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "secondchild with local child --chflag3 ",
+			input: []string{"secondchild", "--chflag3", ""},
+			expectedNotRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutual: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedOneRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedMutualOneRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequiredTogether: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+			expectedRequiredTogetherAndRequired: strings.Join([]string{
+				"--pflag1\tpflag1",
+				"--pflag2\tpflag2",
+				"--pflag3\tpflag3",
+				"--chflag1\tchflag1",
+				"--chflag2\tchflag2",
+				"--help\thelp for secondchild",
+				"-h\thelp for secondchild",
+				"--pchflag1\tpchflag1",
+				"--pchflag2\tpchflag2",
+				"--pchflag3\tpchflag3",
+				"arg1",
+				"arg2",
+				"arg3",
 				":4",
 				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
 		},

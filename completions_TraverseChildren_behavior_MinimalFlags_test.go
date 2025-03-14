@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
+func TestCompletionFlagTraverseChildrenBehaviorMinimalFlags(t *testing.T) {
 
 	t.Parallel()
 
@@ -31,8 +31,9 @@ func TestCompletionFlagBehaviorMinimalFlags(t *testing.T) {
 	) *Command {
 
 		rootCmd := &Command{
-			Use: "root",
-			Run: emptyRun,
+			Use:              "root",
+			Run:              emptyRun,
+			TraverseChildren: false,
 		}
 		childCmd := &Command{
 			Use: "child",

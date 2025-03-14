@@ -466,6 +466,10 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 	// a '-' we know it is a flag.  We cannot use isFlagArg() here as it requires
 	// the flag name to be complete
 	if flag == nil && len(toComplete) > 0 && toComplete[0] == '-' && !strings.Contains(toComplete, "=") && flagCompletion {
+
+		// completing a flag, the shell does not have actionable knowledge of the application's flags
+		directive = ShellCompDirectiveNoFileComp
+
 		if finalCmd.ValidFlagsFunction != nil {
 			completions, directive = finalCmd.ValidFlagsFunction(finalCmd, finalArgs, toComplete)
 		} else {
@@ -484,12 +488,16 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 			}
 		}
 
-		directive = ShellCompDirectiveNoFileComp
-		if len(completions) == 1 && strings.HasSuffix(completions[0], "=") {
-			// If there is a single completion, the shell usually adds a space
-			// after the completion.  We don't want that if the flag ends with an =
-			directive = ShellCompDirectiveNoSpace
-		}
+		// since the code to provide a "--flagname=" as a completion option has been commented out
+		// in getFlagNameCompletions() it is appropriate to comment this code out as well
+		// since none of the completions will have a suffix of "="
+		// Recommend: removing both this block and the related bl;ock in getFlagNameCompletions()
+		//
+		// if len(completions) == 1 && strings.HasSuffix(completions[0], "=") {
+		// 	// If there is a single completion, the shell usually adds a space
+		// 	// after the completion.  We don't want that if the flag ends with an =
+		// 	directive = ShellCompDirectiveNoSpace
+		// }
 
 		if !finalCmd.DisableFlagParsing {
 			// If DisableFlagParsing==false, we have completed the flags as known by Cobra;
@@ -500,6 +508,7 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 		}
 	} else {
 		directive = ShellCompDirectiveDefault
+
 		if flag == nil {
 			foundLocalNonPersistentFlag := false
 			// If TraverseChildren is true on the root command we don't check for
@@ -529,14 +538,17 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 				}
 			}
 
-			// Complete flags based on the set behavior
-			switch behaviors.FlagVerbosity {
-			case MinimalFlags:
-				fallthrough
-			case MoreVerboseFlags:
-				completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
-			case AllFlags:
-				completions = append(completions, completeAllFlags(finalCmd, toComplete)...)
+			// only consider adding flags to the completion set if the toComplete value is empty
+			if toComplete == "" {
+				// Complete flags based on the flag verbosity setting, the default it to show only required flags
+				switch behaviors.FlagVerbosity {
+				case MinimalFlags:
+					fallthrough
+				case MoreVerboseFlags:
+					completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
+				case AllFlags:
+					completions = append(completions, completeAllFlags(finalCmd, toComplete)...)
+				}
 			}
 
 			// Always complete ValidArgs, even if we are completing a subcommand name.
