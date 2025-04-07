@@ -19,7 +19,7 @@ import (
 	"testing"
 )
 
-func TestCompletionFlagBehaviorMoreVerboseFlags(t *testing.T) {
+func TestCompletionFlagBehaviorTraverseChildrenMoreVerboseFlags(t *testing.T) {
 
 	getCmd := func(
 		setRequired bool,
@@ -29,21 +29,24 @@ func TestCompletionFlagBehaviorMoreVerboseFlags(t *testing.T) {
 	) *Command {
 
 		rootCmd := &Command{
-			Use: "root",
-			Run: emptyRun,
+			Use:              "root",
+			Run:              emptyRun,
+			TraverseChildren: true,
 			CompletionBehaviors: &CompletionBehaviors{
 				FlagVerbosity: MoreVerboseFlags,
 			},
 		}
 		childCmd := &Command{
-			Use: "child",
-			Run: emptyRun,
+			Use:              "child",
+			Run:              emptyRun,
+			TraverseChildren: true,
 		}
 		rootCmd.AddCommand(childCmd)
 		childCmd2 := &Command{
-			Use:       "secondchild",
-			Run:       emptyRun,
-			ValidArgs: []string{"arg1", "arg2", "arg3"},
+			Use:              "secondchild",
+			Run:              emptyRun,
+			TraverseChildren: true,
+			ValidArgs:        []string{"arg1", "arg2", "arg3"},
 		}
 		rootCmd.AddCommand(childCmd2)
 

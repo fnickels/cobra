@@ -540,14 +540,18 @@ func (c *Command) getCompletions(args []string) (*Command, []Completion, ShellCo
 
 			// only consider adding flags to the completion set if the toComplete value is empty
 			if toComplete == "" {
-				// Complete flags based on the flag verbosity setting, the default it to show only required flags
-				switch behaviors.FlagVerbosity {
-				case MinimalFlags:
-					fallthrough
-				case MoreVerboseFlags:
-					completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
-				case AllFlags:
-					completions = append(completions, completeAllFlags(finalCmd, toComplete)...)
+				if finalCmd.ValidFlagsFunction != nil {
+					completions, directive = finalCmd.ValidFlagsFunction(finalCmd, finalArgs, toComplete)
+				} else {
+					// Complete flags based on the flag verbosity setting, the default it to show only required flags
+					switch behaviors.FlagVerbosity {
+					case MinimalFlags:
+						fallthrough
+					case MoreVerboseFlags:
+						completions = append(completions, completeRequireFlags(finalCmd, toComplete)...)
+					case AllFlags:
+						completions = append(completions, completeAllFlags(finalCmd, toComplete)...)
+					}
 				}
 			}
 
