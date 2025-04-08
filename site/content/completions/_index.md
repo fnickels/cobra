@@ -312,14 +312,12 @@ json table yaml
 
 Out of the box Cobra will present a list of the available flags when the completion string starts with a '-' characters.  When the default functionality is not sufficient the following are some additional settings that can be used to further customize the user experience.
 
-Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.
+Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.  Be forewarned the basic functionality of the `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired`, `MarkFlagsRequiredTogether` and related features will need to be reimplemented in your function if you use this.
 
 
 ```go
 cmd := &cobra.Command{
 	Use:   "status [ one ] [ two ]",
-	Short: "Display the status of the named release",
-	Long:  status_long,
 	RunE: func(cmd *cobra.Command, args []string) {
 		RunGet(args[0])
 	},
@@ -368,7 +366,7 @@ cmd.Flags().BoolP("flag3", "c", false, "flag3 description")
 The code above is an example where if the argument "one" appears in the command line the flag '--flag1' is excluded:
 
 ```bash
-$ helm status one -[tab][tab]
+$ app status one -[tab][tab]
 -b 		flag2 description
 -c 		flag3 description
 --flag2	flag2 description
@@ -378,7 +376,7 @@ $ helm status one -[tab][tab]
 Similarly, if "two" appears the flag '--flag2' is excluded:
 
 ```bash
-$ helm status two -[tab][tab]
+$ app status two -[tab][tab]
 -a		flag1 description
 -c 		flag3 description
 --flag1	flag1 description
@@ -388,7 +386,7 @@ $ helm status two -[tab][tab]
 if both appear, both are excluded:
 
 ```bash
-$ helm status one two -[tab][tab]
+$ app status one two -[tab][tab]
 -c 		flag3 description
 --flag3	flag3 description
 ```
@@ -396,7 +394,7 @@ $ helm status one two -[tab][tab]
 If neither appear, none are excluded:
 
 ```bash
-$ helm status -[tab][tab]
+$ app status -[tab][tab]
 -a		flag1 description
 -b 		flag2 description
 -c 		flag3 description
@@ -408,7 +406,7 @@ $ helm status -[tab][tab]
 If a flag is already present the function excludes it as well:
 
 ```bash
-$ helm status --flag3 -[tab][tab]
+$ app status --flag3 -[tab][tab]
 -a		flag1 description
 -b 		flag2 description
 --flag1	flag1 description
@@ -418,14 +416,145 @@ $ helm status --flag3 -[tab][tab]
 If the `toComplete` value is more specific the list is further reduced:
 
 ```bash
-$ helm status two --fl[tab][tab]
+$ app status two --fl[tab][tab]
 --flag1	flag1 description
 --flag3	flag3 description
 ```
 
 ### Flag completion behaviors
 
-The default behavior of Cobra when processing ... <WIP>
+The default behavior of Cobra when processing commandline completions has historically only shown flag choices under certain situations, and then only a subset of flags in some cases.  In order to support different customizations there are several behavior setting that can be used to alter the experience.  None of these settings apply if `ValidFlagsFunction` is used since it overrides the Cobra behavior.
+
+The three main conditions are when the `toComplete` value is:
+* blank (ie: "")
+* starts with the '-' character
+* starts with any other character
+
+When the `toComplete` value has one or more characters that do not start with a '-' character, flags will never be included in the generated list.
+
+When the `toComplete` value is blank, in most cases the returned list will not include flags, unless one of several required markings are set on a flag (`MarkPersistentFlagRequired`, `MarkFlagRequired`,  `MarkFlagsOneRequired`, or `MarkFlagsRequiredTogether`)
+
+If the `toComplete` value starts with a '-' character it may return all available flags, or a subset if the required markings are set.
+
+The default logic is fairly specific and may not meet your expectations.  To customize this behavior the `CompletionBehaviors` is provided which is a struct with two fields `FlagVerbosity` and `DoNotInherit`.
+
+The `DoNotInherit` field indicates if set true indicates that any subcommands of the command will not inherit the FlagVerbosity setting of the annotated command.  The default is all subcommands of an annotated command will inherit their parent's setting for `CompletionBehavior`.
+
+There are three valid values for `FlagVerbosity`:
+
+```go
+type CompletionFlagVerbosity int
+
+const (
+	// MinimalFlags displays only the flags that are required
+	// for the command to run.  If no flags are required, then all flags
+	// are displayed when completing a flag (completion string must start
+	// with a '-'), and only required flags when completing a blank completion.
+	// No flags are shown on blank completions if none are required.
+	//   Required Flags:
+	//      * RequiredTogether groupings when one flag in th group is set  -  MarkFlagsRequiredTogether()
+	//	    * One Required grouping  -  MarkFlagsOneRequired()
+	//      * Required flags  -  MarkFlagRequired() & MarkPersistentFlagRequired()
+	// Default behavior
+	MinimalFlags CompletionFlagVerbosity = iota
+
+	// MoreVerboseFlags displays all flags that are available when completing a flag, and only
+	// required flags when completing a blank completion.
+	MoreVerboseFlags
+
+	// AllFlags displays all available flags for both blank completions and flag completions.
+	AllFlags
+)
+```
+
+Examples:
+
+```go
+		rootCmd := &Command{
+			Use:       "root",
+			Run: emptyRun,
+		}
+		child1Cmd := &Command{
+			Use: "child1",
+			Run: emptyRun,
+		}
+		rootCmd.AddCommand(child1Cmd)
+		childCmd2 := &Command{
+			Use:       "child2",
+			Run:       emptyRun,
+		}
+		rootCmd.AddCommand(child2Cmd)
+
+		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
+		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
+		rootCmd.PersistentFlags().Int("pflag3", -3, "pflag3")
+		rootCmd.Flags().Bool("flag1", false, "flag1")
+		rootCmd.Flags().Bool("flag2", false, "flag2")
+		rootCmd.Flags().Bool("flag3", false, "flag3")
+
+		childCmd.PersistentFlags().Int("pchflag1", -1, "pchflag1")
+		childCmd.PersistentFlags().Int("pchflag2", -2, "pchflag2")
+		childCmd.PersistentFlags().Int("pchflag3", -3, "pchflag3")
+
+		childCmd.Flags().Bool("chflag1", false, "chflag1")
+		childCmd.Flags().Bool("chflag2", false, "chflag2")
+		childCmd.Flags().Bool("chflag3", false, "chflag3")
+
+		childCmd2.PersistentFlags().Int("pchflag1", -1, "pchflag1")
+		childCmd2.PersistentFlags().Int("pchflag2", -2, "pchflag2")
+		childCmd2.PersistentFlags().Int("pchflag3", -3, "pchflag3")
+
+		childCmd2.Flags().Bool("chflag1", false, "chflag1")
+		childCmd2.Flags().Bool("chflag2", false, "chflag2")
+		childCmd2.Flags().Bool("chflag3", false, "chflag3")
+
+		if setRequired {
+			rootCmd.MarkPersistentFlagRequired("pflag1")
+			rootCmd.MarkFlagRequired("flag1")
+
+			childCmd.MarkPersistentFlagRequired("pchflag1")
+			childCmd.MarkFlagRequired("chflag1")
+
+			childCmd2.MarkPersistentFlagRequired("pchflag1")
+			childCmd2.MarkFlagRequired("chflag1")
+		}
+
+		if mutuallyExclusive {
+			rootCmd.MarkFlagsMutuallyExclusive("pflag1", "pflag2")
+			rootCmd.MarkFlagsMutuallyExclusive("flag1", "flag2")
+
+			childCmd.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
+			childCmd.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
+
+			childCmd2.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
+			childCmd2.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
+		}
+
+		if oneRequired {
+			rootCmd.MarkFlagsOneRequired("pflag1", "pflag2")
+			rootCmd.MarkFlagsOneRequired("flag1", "flag2")
+
+			childCmd.MarkFlagsOneRequired("pchflag1", "pchflag2")
+			childCmd.MarkFlagsOneRequired("chflag1", "chflag2")
+
+			childCmd2.MarkFlagsOneRequired("pchflag1", "pchflag2")
+			childCmd2.MarkFlagsOneRequired("chflag1", "chflag2")
+		}
+
+		if requiredTogether {
+			rootCmd.MarkFlagsRequiredTogether("pflag1", "pflag3")
+			rootCmd.MarkFlagsRequiredTogether("flag1", "flag3")
+
+			childCmd.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
+			childCmd.MarkFlagsRequiredTogether("chflag1", "chflag3")
+
+			childCmd2.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
+			childCmd2.MarkFlagsRequiredTogether("chflag1", "chflag3")
+		}
+
+```
+
+
 
 #### Debugging
 
