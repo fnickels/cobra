@@ -237,12 +237,6 @@ ShellCompDirectiveKeepOrder
 
 ***Note***: When using the `ValidArgsFunction`, Cobra will call your registered function after having parsed all flags and arguments provided in the command-line.  You therefore don't need to do this parsing yourself.  For example, when a user calls `helm status --namespace my-rook-ns [tab][tab]`, Cobra will call your registered `ValidArgsFunction` after having parsed the `--namespace` flag, as it would have done when calling the `RunE` function.
 
-## Dynamic Completion of flags
-
-Out of the box Cobra will present a list of the available flags when the completion string starts with a '-' characters.  There are several methods available top customize this behavior, when the default functionality is not sufficient.
-
-
-
 
 
 #### Debugging
@@ -312,6 +306,126 @@ Notice that calling `RegisterFlagCompletionFunc()` is done through the `command`
 $ helm status --output [tab][tab]
 json table yaml
 ```
+
+
+### Dynamic Completion of flags
+
+Out of the box Cobra will present a list of the available flags when the completion string starts with a '-' characters.  When the default functionality is not sufficient the following are some additional settings that can be used to further customize the user experience.
+
+Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.
+
+
+```go
+cmd := &cobra.Command{
+	Use:   "status [ one ] [ two ]",
+	Short: "Display the status of the named release",
+	Long:  status_long,
+	RunE: func(cmd *cobra.Command, args []string) {
+		RunGet(args[0])
+	},
+	ValidArgs: []string{"one", "two"},
+	ValidFlagsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
+		list := []string{}
+
+		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
+
+			// logic for selecting which flags to exclude
+			if strings.Contains(args, "one")  && flag.Name == "flag1"{
+				continue
+			}
+
+			if strings.Contains(args, "two") && flag.Name == "flag2" {
+				continue
+			}
+
+			// exclude hidden flags and flags already present on the command line
+			if !flag.Hidden && !flag.Changed {
+				if flag.Name != "" {
+					item := "--" + flag.Name
+
+					if strings.HasPrefix(item, toComplete) {
+						list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
+					}
+				}
+				if flag.Shorthand != "" {
+					item := "-" + flag.Shorthand
+
+					if strings.HasPrefix(item, toComplete) {
+						list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
+					}
+				}
+			}
+		})
+
+		return list, cobra.ShellCompDirectiveNoFileComp
+	},
+}
+cmd.Flags().BoolP("flag1", "a", false, "flag1 description")
+cmd.Flags().BoolP("flag2", "b", false, "flag2 description")
+cmd.Flags().BoolP("flag3", "c", false, "flag3 description")
+```
+
+The code above is an example where if the argument "one" appears in the command line the flag '--flag1' is excluded:
+
+```bash
+$ helm status one -[tab][tab]
+-b 		flag2 description
+-c 		flag3 description
+--flag2	flag2 description
+--flag3	flag3 description
+```
+
+Similarly, if "two" appears the flag '--flag2' is excluded:
+
+```bash
+$ helm status two -[tab][tab]
+-a		flag1 description
+-c 		flag3 description
+--flag1	flag1 description
+--flag3	flag3 description
+```
+
+if both appear, both are excluded:
+
+```bash
+$ helm status one two -[tab][tab]
+-c 		flag3 description
+--flag3	flag3 description
+```
+
+If neither appear, none are excluded:
+
+```bash
+$ helm status -[tab][tab]
+-a		flag1 description
+-b 		flag2 description
+-c 		flag3 description
+--flag1	flag1 description
+--flag2	flag2 description
+--flag3	flag3 description
+```
+
+If a flag is already present the function excludes it as well:
+
+```bash
+$ helm status --flag3 -[tab][tab]
+-a		flag1 description
+-b 		flag2 description
+--flag1	flag1 description
+--flag2	flag2 description
+```
+
+If the `toComplete` value is more specific the list is further reduced:
+
+```bash
+$ helm status two --fl[tab][tab]
+--flag1	flag1 description
+--flag3	flag3 description
+```
+
+### Flag completion behaviors
+
+The default behavior of Cobra when processing ... <WIP>
 
 #### Debugging
 
