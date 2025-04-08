@@ -330,7 +330,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// required set to false
 		t.Run(tc.name+"_Not_Required", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : no Flags Set Required")
@@ -338,7 +337,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(false, false, false, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedNotRequired {
@@ -351,7 +351,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// required set to true
 		t.Run(tc.name+"s_Required", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 Set Required")
@@ -359,7 +358,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(true, false, false, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedRequired {
@@ -371,7 +371,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// mutual set to true
 		t.Run(tc.name+"s_Mutual", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive")
@@ -379,7 +378,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(false, true, false, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedMutual {
@@ -391,7 +391,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// mutual & Required set to true
 		t.Run(tc.name+"s_Mutual_Required", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive & Flag 1 Set Required")
@@ -399,7 +398,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(true, true, false, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedMutualRequired {
@@ -411,7 +411,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// OneRequired set to true
 		t.Run(tc.name+"s_OneRequired", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set One Required")
@@ -419,7 +418,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(false, false, true, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedOneRequired {
@@ -431,7 +431,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// mutual & OneRequired set to true
 		t.Run(tc.name+"s_Mutual_OneRequired", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 2 Set Mutually Exclusive & OneRequired")
@@ -439,7 +438,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(false, true, true, false), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedMutualOneRequired {
@@ -451,7 +451,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// Required Together set to true
 		t.Run(tc.name+"s_RequiredTogether", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 3 Set Required Together")
@@ -459,7 +458,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(false, false, false, true), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedRequiredTogether {
@@ -471,7 +471,6 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 		// Required Together and Required set to true
 		t.Run(tc.name+"s_RequiredTogether_Required", func(t *testing.T) {
-			t.Parallel()
 
 			t.Logf("Running test: %v", tc.name)
 			t.Logf("Version     : Flag 1 & 3 Set Required Together & Flag 1 Set Required")
@@ -479,7 +478,8 @@ func TestCompletionFlagQuick(t *testing.T) {
 
 			output, err := executeCommand(getCmd(true, false, false, true), append([]string{ShellCompRequestCmd}, tc.input...)...)
 			if err != nil {
-				t.Errorf("Unexpected error: %v", err)
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
 			}
 
 			if output != tc.expectedRequiredTogetherAndRequired {
