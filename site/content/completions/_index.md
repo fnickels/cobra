@@ -442,30 +442,10 @@ The `DoNotInherit` field indicates if set true indicates that any subcommands of
 
 There are three valid values for `FlagVerbosity`:
 
-```go
-type CompletionFlagVerbosity int
+* `MinimalFlags`      (default - described above)
+* `MoreVerboseFlags`  Shows all available flags when completing a flag, and only required flags when completing a blank completion.
+* `AllFlags`          Shows all available flags for both blank completions and flag completions.
 
-const (
-	// MinimalFlags displays only the flags that are required
-	// for the command to run.  If no flags are required, then all flags
-	// are displayed when completing a flag (completion string must start
-	// with a '-'), and only required flags when completing a blank completion.
-	// No flags are shown on blank completions if none are required.
-	//   Required Flags:
-	//      * RequiredTogether groupings when one flag in th group is set  -  MarkFlagsRequiredTogether()
-	//	    * One Required grouping  -  MarkFlagsOneRequired()
-	//      * Required flags  -  MarkFlagRequired() & MarkPersistentFlagRequired()
-	// Default behavior
-	MinimalFlags CompletionFlagVerbosity = iota
-
-	// MoreVerboseFlags displays all flags that are available when completing a flag, and only
-	// required flags when completing a blank completion.
-	MoreVerboseFlags
-
-	// AllFlags displays all available flags for both blank completions and flag completions.
-	AllFlags
-)
-```
 
 Examples:
 
@@ -477,13 +457,27 @@ Examples:
 		child1Cmd := &Command{
 			Use: "child1",
 			Run: emptyRun,
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MinimalFlags,
+			},
 		}
 		rootCmd.AddCommand(child1Cmd)
 		childCmd2 := &Command{
 			Use:       "child2",
 			Run:       emptyRun,
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MoreVerboseFlags,
+			},
 		}
 		rootCmd.AddCommand(child2Cmd)
+		childCmd3 := &Command{
+			Use:       "child3",
+			Run:       emptyRun,
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: AllFlags,
+			},
+		}
+		rootCmd.AddCommand(child3Cmd)
 
 		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
 		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
