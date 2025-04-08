@@ -237,6 +237,14 @@ ShellCompDirectiveKeepOrder
 
 ***Note***: When using the `ValidArgsFunction`, Cobra will call your registered function after having parsed all flags and arguments provided in the command-line.  You therefore don't need to do this parsing yourself.  For example, when a user calls `helm status --namespace my-rook-ns [tab][tab]`, Cobra will call your registered `ValidArgsFunction` after having parsed the `--namespace` flag, as it would have done when calling the `RunE` function.
 
+## Dynamic Completion of flags
+
+Out of the box Cobra will present a list of the available flags when the completion string starts with a '-' characters.  There are several methods available top customize this behavior, when the default functionality is not sufficient.
+
+
+
+
+
 #### Debugging
 
 Cobra achieves dynamic completion through the use of a hidden command called by the completion script.  To debug your Go completion code, you can call this hidden command directly:
