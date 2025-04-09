@@ -290,9 +290,9 @@ $ kubectl exec [tab][tab]
 -c            --container=  -p            --pod=
 ```
 
-### Specify dynamic flag completion
+### Specify dynamic flag completion for flag parameter values
 
-As for nouns, Cobra provides a way of defining dynamic completion of flags.  To provide a Go function that Cobra will execute when it needs the list of completion choices for a flag, you must register the function using the `command.RegisterFlagCompletionFunc()` function.
+As for nouns, Cobra provides a way of defining dynamic completion of a flag's parameter values (ints, strings, etc...).  To provide a Go function that Cobra will execute when it needs the list of completion choices for a flag, you must register the function using the `command.RegisterFlagCompletionFunc()` function.
 
 ```go
 flagName := "output"
@@ -310,50 +310,62 @@ json table yaml
 
 ### Dynamic Completion of flags
 
-Out of the box Cobra will present a list of the available flags when the completion string starts with a '-' characters.  When the default functionality is not sufficient the following are some additional settings that can be used to further customize the user experience.
+By default Cobra will present a list of the available flags when the completion string starts with a '-' characters.  If one of the `MarkFlags...` functions are used, the list of flags may be reduced.  Additionally, some of the `MarkFlags...` functions will cause some flags to be presented when the completion string is also blank.  
+
+When the default functionality is not sufficient the following are some additional configurations which can be used to further customize what flags are presented under different conditions.
 
 Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.  Be forewarned the basic functionality of the `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired`, `MarkFlagsRequiredTogether` and related features will need to be reimplemented in your function if you use this.
 
 
 ```go
 cmd := &cobra.Command{
-	Use:   "status [ one ] [ two ]",
-	RunE: func(cmd *cobra.Command, args []string) {
-		RunGet(args[0])
-	},
+	Use:       "root",
+	Run:       func(*cobra.Command, []string) {},
 	ValidArgs: []string{"one", "two"},
 	ValidFlagsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]cobra.Completion, cobra.ShellCompDirective) {
 		list := []string{}
-
 		cmd.Flags().VisitAll(func(flag *pflag.Flag) {
 
 			// logic for selecting which flags to exclude
-			if strings.Contains(args, "one")  && flag.Name == "flag1"{
-				continue
+			if flag.Name == "flag1" {
+				for _, v := range args {
+					if v == "one" {
+						// exclude 'flag1' when "one" exists on the command line
+						return
+					}
+				}
 			}
 
-			if strings.Contains(args, "two") && flag.Name == "flag2" {
-				continue
+			if flag.Name == "flag2" {
+				for _, v := range args {
+					if v == "two" {
+						// exclude 'flag2' when "two" exists on the command line
+						return
+					}
+				}
 			}
 
 			// exclude hidden flags and flags already present on the command line
-			if !flag.Hidden && !flag.Changed {
-				if flag.Name != "" {
-					item := "--" + flag.Name
+			if flag.Hidden || flag.Changed {
+				return
+			}
 
-					if strings.HasPrefix(item, toComplete) {
-						list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
-					}
+			if flag.Name != "" {
+				item := "--" + flag.Name
+				if strings.HasPrefix(item, toComplete) {
+					list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
 				}
-				if flag.Shorthand != "" {
-					item := "-" + flag.Shorthand
+			}
 
-					if strings.HasPrefix(item, toComplete) {
-						list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
-					}
+			if flag.Shorthand != "" {
+				item := "-" + flag.Shorthand
+				if strings.HasPrefix(item, toComplete) {
+					list = append(list, cobra.CompletionWithDesc(item, flag.Usage))
 				}
 			}
 		})
+
+		sort.Strings(list)
 
 		return list, cobra.ShellCompDirectiveNoFileComp
 	},
@@ -367,58 +379,68 @@ The code above is an example where if the argument "one" appears in the command 
 
 ```bash
 $ app status one -[tab][tab]
--b 		flag2 description
--c 		flag3 description
---flag2	flag2 description
---flag3	flag3 description
+--flag2 flag2 description
+--flag3 flag3 description
+--help  help for root
+-b      flag2 description
+-c      flag3 description
+-h      help for root
 ```
 
 Similarly, if "two" appears the flag '--flag2' is excluded:
 
 ```bash
 $ app status two -[tab][tab]
--a		flag1 description
--c 		flag3 description
---flag1	flag1 description
---flag3	flag3 description
+--flag1 flag1 description
+--flag3 flag3 description
+--help  help for root
+-a      flag1 description
+-c      flag3 description
+-h      help for root
 ```
 
 if both appear, both are excluded:
 
 ```bash
 $ app status one two -[tab][tab]
--c 		flag3 description
---flag3	flag3 description
+--flag3 flag3 description
+--help  help for root
+-c      flag3 description
+-h      help for root
 ```
 
 If neither appear, none are excluded:
 
 ```bash
 $ app status -[tab][tab]
--a		flag1 description
--b 		flag2 description
--c 		flag3 description
---flag1	flag1 description
---flag2	flag2 description
---flag3	flag3 description
+--flag1 flag1 description
+--flag2 flag2 description
+--flag3 flag3 description
+--help  help for root
+-a      flag1 description
+-b      flag2 description
+-c      flag3 description
+-h      help for root
 ```
 
 If a flag is already present the function excludes it as well:
 
 ```bash
 $ app status --flag3 -[tab][tab]
--a		flag1 description
--b 		flag2 description
---flag1	flag1 description
---flag2	flag2 description
+--flag1 flag1 description
+--flag2 flag2 description
+--help  help for root
+-a      flag1 description
+-b      flag2 description
+-h      help for root
 ```
 
 If the `toComplete` value is more specific the list is further reduced:
 
 ```bash
 $ app status two --fl[tab][tab]
---flag1	flag1 description
---flag3	flag3 description
+--flag1 flag1 description
+--flag3 flag3 description
 ```
 
 ### Flag completion behaviors

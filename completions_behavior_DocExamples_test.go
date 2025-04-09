@@ -28,7 +28,7 @@ func TestCompletionFlagBehaviorDocExamplesValidFlagsFunction(t *testing.T) {
 
 		cmd := &Command{
 			Use:       "root",
-			Run:       emptyRun,
+			Run:       func(*Command, []string) {},
 			ValidArgs: []string{"one", "two"},
 			ValidFlagsFunction: func(cmd *Command, args []string, toComplete string) ([]Completion, ShellCompDirective) {
 				list := []string{}
@@ -247,6 +247,9 @@ func TestCompletionFlagBehaviorDocExamplesValidFlagsFunction(t *testing.T) {
 				//	}
 
 				t.Fail()
+			} else {
+				// display actual output when successful.  Use with 'go test -v'
+				t.Logf("\n%+v", output)
 			}
 		})
 	}
