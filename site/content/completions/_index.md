@@ -447,7 +447,7 @@ There are three valid values for `FlagVerbosity`:
 * `AllFlags`          Shows all available flags for both blank completions and flag completions.
 
 
-Examples:
+Examples (without required fllags):
 
 ```go
 		rootCmd := &Command{
@@ -457,6 +457,7 @@ Examples:
 		child1Cmd := &Command{
 			Use: "child1",
 			Run: emptyRun,
+			ValidArgs: []string{"one", "two"},
 			CompletionBehaviors: &CompletionBehaviors{
 				FlagVerbosity: MinimalFlags,
 			},
@@ -465,6 +466,7 @@ Examples:
 		childCmd2 := &Command{
 			Use:       "child2",
 			Run:       emptyRun,
+			ValidArgs: []string{"three", "four"},
 			CompletionBehaviors: &CompletionBehaviors{
 				FlagVerbosity: MoreVerboseFlags,
 			},
@@ -473,81 +475,29 @@ Examples:
 		childCmd3 := &Command{
 			Use:       "child3",
 			Run:       emptyRun,
+			ValidArgs: []string{"five", "six"},
 			CompletionBehaviors: &CompletionBehaviors{
 				FlagVerbosity: AllFlags,
 			},
 		}
 		rootCmd.AddCommand(child3Cmd)
 
-		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
-		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
-		rootCmd.PersistentFlags().Int("pflag3", -3, "pflag3")
-		rootCmd.Flags().Bool("flag1", false, "flag1")
-		rootCmd.Flags().Bool("flag2", false, "flag2")
-		rootCmd.Flags().Bool("flag3", false, "flag3")
+		rootCmd.PersistentFlags().BoolP("pflag1", "p", false, "persistent flag1 description")
+		rootCmd.Flags().BoolP("flag1", "a" false, "flag1 description")
 
-		childCmd.PersistentFlags().Int("pchflag1", -1, "pchflag1")
-		childCmd.PersistentFlags().Int("pchflag2", -2, "pchflag2")
-		childCmd.PersistentFlags().Int("pchflag3", -3, "pchflag3")
+		child1Cmd.Flags().Bool("child1flagB", "b", false, "child1 flag B")
+		child1Cmd.Flags().Bool("child1flagC", "c", false, "child1 flag C")
 
-		childCmd.Flags().Bool("chflag1", false, "chflag1")
-		childCmd.Flags().Bool("chflag2", false, "chflag2")
-		childCmd.Flags().Bool("chflag3", false, "chflag3")
+		child2Cmd.Flags().Bool("child2flagD", "d", false, "child1 flag B")
+		child2Cmd.Flags().Bool("child2flagE", "e", false, "child1 flag C")
 
-		childCmd2.PersistentFlags().Int("pchflag1", -1, "pchflag1")
-		childCmd2.PersistentFlags().Int("pchflag2", -2, "pchflag2")
-		childCmd2.PersistentFlags().Int("pchflag3", -3, "pchflag3")
-
-		childCmd2.Flags().Bool("chflag1", false, "chflag1")
-		childCmd2.Flags().Bool("chflag2", false, "chflag2")
-		childCmd2.Flags().Bool("chflag3", false, "chflag3")
-
-		if setRequired {
-			rootCmd.MarkPersistentFlagRequired("pflag1")
-			rootCmd.MarkFlagRequired("flag1")
-
-			childCmd.MarkPersistentFlagRequired("pchflag1")
-			childCmd.MarkFlagRequired("chflag1")
-
-			childCmd2.MarkPersistentFlagRequired("pchflag1")
-			childCmd2.MarkFlagRequired("chflag1")
-		}
-
-		if mutuallyExclusive {
-			rootCmd.MarkFlagsMutuallyExclusive("pflag1", "pflag2")
-			rootCmd.MarkFlagsMutuallyExclusive("flag1", "flag2")
-
-			childCmd.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
-			childCmd.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
-
-			childCmd2.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
-			childCmd2.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
-		}
-
-		if oneRequired {
-			rootCmd.MarkFlagsOneRequired("pflag1", "pflag2")
-			rootCmd.MarkFlagsOneRequired("flag1", "flag2")
-
-			childCmd.MarkFlagsOneRequired("pchflag1", "pchflag2")
-			childCmd.MarkFlagsOneRequired("chflag1", "chflag2")
-
-			childCmd2.MarkFlagsOneRequired("pchflag1", "pchflag2")
-			childCmd2.MarkFlagsOneRequired("chflag1", "chflag2")
-		}
-
-		if requiredTogether {
-			rootCmd.MarkFlagsRequiredTogether("pflag1", "pflag3")
-			rootCmd.MarkFlagsRequiredTogether("flag1", "flag3")
-
-			childCmd.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
-			childCmd.MarkFlagsRequiredTogether("chflag1", "chflag3")
-
-			childCmd2.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
-			childCmd2.MarkFlagsRequiredTogether("chflag1", "chflag3")
-		}
-
+		child3Cmd.Flags().Bool("child3flagF", "f", false, "child1 flag B")
+		child4Cmd.Flags().Bool("child3flagG", "g", false, "child1 flag C")
 ```
 
+#### Special case when ValidArgsFunction and ValidFlagsFunction are both set
+
+TODO: <WIP>
 
 
 #### Debugging
