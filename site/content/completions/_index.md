@@ -310,11 +310,11 @@ json table yaml
 
 ### Dynamic Completion of flags
 
-By default Cobra will present a list of the available flags when the completion string starts with a '-' characters.  If one of the `MarkFlags...` functions are used, the list of flags may be reduced.  Additionally, some of the `MarkFlags...` functions will cause some flags to be presented when the completion string is also blank.  
+By default Cobra will present a list of the available flags when the completion string starts with a '-' characters.  If one of the `MarkFlag...` functions is used, the list of flags may be reduced.  Additionally, some of the `MarkFlag...` functions will cause some flags to be presented when the completion string is also blank.  *(for more details see the `Flag completion behaviors` section below)*
 
-When the default functionality is not sufficient the following are some additional configurations which can be used to further customize what flags are presented under different conditions.
+When the default functionality is not sufficient the following are some additional configuration options which can be used to further customize what flags are presented under different conditions.
 
-Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.  Be forewarned the basic functionality of the `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired`, `MarkFlagsRequiredTogether` and related features will need to be reimplemented in your function if you use this.
+Similar to `ValidArgsFunction`, there is a `ValidFlagsFunction` which can customize which flags are displayed based on criteria other than those managed with things like `MarkFlagRequired`, `MarkPersistentFlagRequired`, `MarkFlagsMutuallyExclusive`, `MarkFlagsOneRequired` or `MarkFlagsRequiredTogether` flags.  This is especially useful if certain flags should only be presented when specific arguments are either present or not present.  Be forewarned the functionality of the `MarkFlag...` functions will need to be incorporated in your function if you plan to use both.
 
 
 ```go

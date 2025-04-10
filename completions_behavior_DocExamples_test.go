@@ -228,24 +228,8 @@ func TestCompletionFlagBehaviorDocExamplesValidFlagsFunction(t *testing.T) {
 			}
 
 			if output != tc.expectedOutput {
-				t.Logf("Expected Len(): %v", len(tc.expectedOutput))
-				t.Logf("Got      Len(): %v", len(output))
-
 				t.Logf("Expected:\n%+v", tc.expectedOutput)
 				t.Logf("Got:\n%+v", output)
-
-				//	min := len(tc.expectedOutput)
-				//	if min > len(output) {
-				//		min = len(output)
-				//	}
-				//	//if min > 30 {
-				//	//	min = 30
-				//	//}
-				//
-				//	for i := 0; i < min; i++ {
-				//		t.Logf("(%2v) Expected %v -> Got %v", i, tc.expectedOutput[i], output[i])
-				//	}
-
 				t.Fail()
 			} else {
 				// display actual output when successful.  Use with 'go test -v'
@@ -255,140 +239,421 @@ func TestCompletionFlagBehaviorDocExamplesValidFlagsFunction(t *testing.T) {
 	}
 }
 
-//
-//
-//  func TestCompletionFlagBehaviorDocExamples(t *testing.T) {
-//
-//
-//  	getCmd := func() *Command {
-//
-//  		rootCmd := &Command{
-//  			Use:       "root",
-//  			Run:       emptyRun,
-//  			ValidArgs: []string{"rarg1", "rarg2"},
-//  			CompletionBehaviors: &CompletionBehaviors{
-//  				FlagVerbosity: MoreVerboseFlags,
-//  			},
-//  		}
-//  		childCmd := &Command{
-//  			Use: "child",
-//  			Run: emptyRun,
-//  		}
-//  		rootCmd.AddCommand(childCmd)
-//  		childCmd2 := &Command{
-//  			Use:       "secondchild",
-//  			Run:       emptyRun,
-//  			ValidArgs: []string{"arg1", "arg2", "arg3"},
-//  		}
-//  		rootCmd.AddCommand(childCmd2)
-//
-//  		rootCmd.PersistentFlags().Int("pflag1", -1, "pflag1")
-//  		rootCmd.PersistentFlags().Int("pflag2", -2, "pflag2")
-//  		rootCmd.PersistentFlags().Int("pflag3", -3, "pflag3")
-//  		rootCmd.Flags().Bool("flag1", false, "flag1")
-//  		rootCmd.Flags().Bool("flag2", false, "flag2")
-//  		rootCmd.Flags().Bool("flag3", false, "flag3")
-//
-//  		childCmd.PersistentFlags().Int("pchflag1", -1, "pchflag1")
-//  		childCmd.PersistentFlags().Int("pchflag2", -2, "pchflag2")
-//  		childCmd.PersistentFlags().Int("pchflag3", -3, "pchflag3")
-//
-//  		childCmd.Flags().Bool("chflag1", false, "chflag1")
-//  		childCmd.Flags().Bool("chflag2", false, "chflag2")
-//  		childCmd.Flags().Bool("chflag3", false, "chflag3")
-//
-//  		childCmd2.PersistentFlags().Int("pchflag1", -1, "pchflag1")
-//  		childCmd2.PersistentFlags().Int("pchflag2", -2, "pchflag2")
-//  		childCmd2.PersistentFlags().Int("pchflag3", -3, "pchflag3")
-//
-//  		childCmd2.Flags().Bool("chflag1", false, "chflag1")
-//  		childCmd2.Flags().Bool("chflag2", false, "chflag2")
-//  		childCmd2.Flags().Bool("chflag3", false, "chflag3")
-//
-//  		if setRequired {
-//  			rootCmd.MarkPersistentFlagRequired("pflag1")
-//  			rootCmd.MarkFlagRequired("flag1")
-//
-//  			childCmd.MarkPersistentFlagRequired("pchflag1")
-//  			childCmd.MarkFlagRequired("chflag1")
-//
-//  			childCmd2.MarkPersistentFlagRequired("pchflag1")
-//  			childCmd2.MarkFlagRequired("chflag1")
-//  		}
-//
-//  		if mutuallyExclusive {
-//  			rootCmd.MarkFlagsMutuallyExclusive("pflag1", "pflag2")
-//  			rootCmd.MarkFlagsMutuallyExclusive("flag1", "flag2")
-//
-//  			childCmd.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
-//  			childCmd.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
-//
-//  			childCmd2.MarkFlagsMutuallyExclusive("pchflag1", "pchflag2")
-//  			childCmd2.MarkFlagsMutuallyExclusive("chflag1", "chflag2")
-//  		}
-//
-//  		if oneRequired {
-//  			rootCmd.MarkFlagsOneRequired("pflag1", "pflag2")
-//  			rootCmd.MarkFlagsOneRequired("flag1", "flag2")
-//
-//  			childCmd.MarkFlagsOneRequired("pchflag1", "pchflag2")
-//  			childCmd.MarkFlagsOneRequired("chflag1", "chflag2")
-//
-//  			childCmd2.MarkFlagsOneRequired("pchflag1", "pchflag2")
-//  			childCmd2.MarkFlagsOneRequired("chflag1", "chflag2")
-//  		}
-//
-//  		if requiredTogether {
-//  			rootCmd.MarkFlagsRequiredTogether("pflag1", "pflag3")
-//  			rootCmd.MarkFlagsRequiredTogether("flag1", "flag3")
-//
-//  			childCmd.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
-//  			childCmd.MarkFlagsRequiredTogether("chflag1", "chflag3")
-//
-//  			childCmd2.MarkFlagsRequiredTogether("pchflag1", "pchflag3")
-//  			childCmd2.MarkFlagsRequiredTogether("chflag1", "chflag3")
-//  		}
-//
-//  		return rootCmd
-//  	}
-//
-//  	testcases := []struct {
-//  		name           string
-//  		input          []string
-//  		expectedOutput string
-//  	}{
-//  		{
-//  			name:  "blank",
-//  			input: []string{""},
-//  			expectedOutput: strings.Join([]string{
-//  				"child",
-//  				"completion\tGenerate the autocompletion script for the specified shell",
-//  				"help\tHelp about any command",
-//  				"secondchild",
-//  				"rarg1",
-//  				"rarg2",
-//  				":4",
-//  				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
-//  		},	}
-//
-//  	for _, tc := range testcases {
-//
-//  		// required set to false
-//  		t.Run(tc.name+"_Not_Required", func(t *testing.T) {
-//
-//  			t.Logf("Running test: %v", tc.name)
-//  			t.Logf("Input       : %v", tc.input)
-//
-//  			output, err := executeCommand(getCmd(), append([]string{ShellCompRequestCmd}, tc.input...)...)
-//  			if err != nil {
-//  				t.Logf("Unexpected error: %v", err)
-//  				t.Fail()
-//  			}
-//
-//  			if output != tc.expectedOutput {
-//  				t.Logf("Expected:\n%+v", tc.expectedOutput)
-//  				t.Logf("Got:\n%+v", output)
-//  				t.Fail()
-//  			}
-//  		})
-//  }
+func TestCompletionFlagBehaviorDocExamplesVerbosity(t *testing.T) {
+
+	getCmd := func() *Command {
+
+		rootCmd := &Command{
+			Use:       "root",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"one", "two"},
+		}
+		child1Cmd := &Command{
+			Use:       "child-min",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"min", "max"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MinimalFlags,
+			},
+		}
+		rootCmd.AddCommand(child1Cmd)
+		child2Cmd := &Command{
+			Use:       "child-more",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"more", "less"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MoreVerboseFlags,
+			},
+		}
+		rootCmd.AddCommand(child2Cmd)
+		child3Cmd := &Command{
+			Use:       "child-all",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"all", "none"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: AllFlags,
+			},
+		}
+		rootCmd.AddCommand(child3Cmd)
+
+		rootCmd.PersistentFlags().BoolP("flag1", "1", false, "persistent flag 1 description")
+		rootCmd.PersistentFlags().BoolP("flag2", "2", false, "persistent flag 2 description")
+
+		rootCmd.Flags().BoolP("flagA", "a", false, "flag A description")
+		rootCmd.Flags().BoolP("flagB", "b", false, "flag B description")
+
+		child1Cmd.Flags().BoolP("flagC", "c", false, "flag C description")
+		child1Cmd.Flags().BoolP("flagD", "d", false, "flag D description")
+
+		child2Cmd.Flags().BoolP("flagE", "e", false, "flag E description")
+		child2Cmd.Flags().BoolP("flagF", "f", false, "flag F description")
+
+		child3Cmd.Flags().BoolP("flagG", "g", false, "flag G description")
+		child3Cmd.Flags().BoolP("flagI", "i", false, "flag I description")
+
+		return rootCmd
+	}
+
+	testcases := []struct {
+		name           string
+		input          []string
+		expectedOutput string
+	}{
+		{
+			name:  "blank",
+			input: []string{""},
+			expectedOutput: strings.Join([]string{
+				"child-all",
+				"child-min",
+				"child-more",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				"one",
+				"two",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag",
+			input: []string{"-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagA\tflag A description",
+				"-a\tflag A description",
+				"--flagB\tflag B description",
+				"-b\tflag B description",
+				"--help\thelp for root",
+				"-h\thelp for root",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "Min Verbosity - blank",
+			input: []string{"child-min", ""},
+			expectedOutput: strings.Join([]string{
+				"min",
+				"max",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "Min Verbosity - incomplete flag",
+			input: []string{"child-min", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagC\tflag C description",
+				"-c\tflag C description",
+				"--flagD\tflag D description",
+				"-d\tflag D description",
+				"--help\thelp for child-min",
+				"-h\thelp for child-min",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "More Verbosity - blank",
+			input: []string{"child-more", ""},
+			expectedOutput: strings.Join([]string{
+				"more",
+				"less",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "More Verbosity - incomplete flag",
+			input: []string{"child-more", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagE\tflag E description",
+				"-e\tflag E description",
+				"--flagF\tflag F description",
+				"-f\tflag F description",
+				"--help\thelp for child-more",
+				"-h\thelp for child-more",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "All Verbosity - blank",
+			input: []string{"child-all", ""},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagG\tflag G description",
+				"-g\tflag G description",
+				"--flagI\tflag I description",
+				"-i\tflag I description",
+				"--help\thelp for child-all",
+				"-h\thelp for child-all",
+				"all",
+				"none",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "All Verbosity - incomplete flag",
+			input: []string{"child-all", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagG\tflag G description",
+				"-g\tflag G description",
+				"--flagI\tflag I description",
+				"-i\tflag I description",
+				"--help\thelp for child-all",
+				"-h\thelp for child-all",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+	}
+
+	for _, tc := range testcases {
+
+		// required set to false
+		t.Run(tc.name, func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
+			}
+
+			if output != tc.expectedOutput {
+				t.Logf("Expected:\n%+v", tc.expectedOutput)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			} else {
+				// display actual output when successful.  Use with 'go test -v'
+				t.Logf("\n%+v", output)
+			}
+		})
+	}
+}
+
+func TestCompletionFlagBehaviorDocExamplesVerbosityAndRequired(t *testing.T) {
+
+	getCmd := func() *Command {
+
+		rootCmd := &Command{
+			Use:       "root",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"one", "two"},
+		}
+		child1Cmd := &Command{
+			Use:       "child-min",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"min", "max"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MinimalFlags,
+			},
+		}
+		rootCmd.AddCommand(child1Cmd)
+		child2Cmd := &Command{
+			Use:       "child-more",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"more", "less"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: MoreVerboseFlags,
+			},
+		}
+		rootCmd.AddCommand(child2Cmd)
+		child3Cmd := &Command{
+			Use:       "child-all",
+			Run:       func(*Command, []string) {},
+			ValidArgs: []string{"all", "none"},
+			CompletionBehaviors: &CompletionBehaviors{
+				FlagVerbosity: AllFlags,
+			},
+		}
+		rootCmd.AddCommand(child3Cmd)
+
+		rootCmd.PersistentFlags().BoolP("flag1", "1", false, "persistent flag 1 description")
+		rootCmd.PersistentFlags().BoolP("flag2", "2", false, "persistent flag 2 description")
+		rootCmd.MarkPersistentFlagRequired("flag1")
+
+		rootCmd.Flags().BoolP("flagA", "a", false, "flag A description")
+		rootCmd.Flags().BoolP("flagB", "b", false, "flag B description")
+		rootCmd.MarkFlagRequired("flagA")
+
+		child1Cmd.Flags().BoolP("flagC", "c", false, "flag C description")
+		child1Cmd.Flags().BoolP("flagD", "d", false, "flag D description")
+		child1Cmd.MarkFlagRequired("flagC")
+
+		child2Cmd.Flags().BoolP("flagE", "e", false, "flag E description")
+		child2Cmd.Flags().BoolP("flagF", "f", false, "flag F description")
+		child2Cmd.MarkFlagRequired("flagE")
+
+		child3Cmd.Flags().BoolP("flagG", "g", false, "flag G description")
+		child3Cmd.Flags().BoolP("flagI", "i", false, "flag I description")
+		child3Cmd.MarkFlagRequired("flagG")
+
+		return rootCmd
+	}
+
+	testcases := []struct {
+		name           string
+		input          []string
+		expectedOutput string
+	}{
+		{
+			name:  "blank",
+			input: []string{""},
+			expectedOutput: strings.Join([]string{
+				"child-all",
+				"child-min",
+				"child-more",
+				"completion\tGenerate the autocompletion script for the specified shell",
+				"help\tHelp about any command",
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flagA\tflag A description",
+				"-a\tflag A description",
+				"one",
+				"two",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "incomplete flag",
+			input: []string{"-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flagA\tflag A description",
+				"-a\tflag A description",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "Min Verbosity - blank",
+			input: []string{"child-min", ""},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flagC\tflag C description",
+				"-c\tflag C description",
+				"min",
+				"max",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "Min Verbosity - incomplete flag",
+			input: []string{"child-min", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flagC\tflag C description",
+				"-c\tflag C description",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "More Verbosity - blank",
+			input: []string{"child-more", ""},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flagE\tflag E description",
+				"-e\tflag E description",
+				"more",
+				"less",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "More Verbosity - incomplete flag",
+			input: []string{"child-more", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagE\tflag E description",
+				"-e\tflag E description",
+				"--flagF\tflag F description",
+				"-f\tflag F description",
+				"--help\thelp for child-more",
+				"-h\thelp for child-more",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "All Verbosity - blank",
+			input: []string{"child-all", ""},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagG\tflag G description",
+				"-g\tflag G description",
+				"--flagI\tflag I description",
+				"-i\tflag I description",
+				"--help\thelp for child-all",
+				"-h\thelp for child-all",
+				"all",
+				"none",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+		{
+			name:  "All Verbosity - incomplete flag",
+			input: []string{"child-all", "-"},
+			expectedOutput: strings.Join([]string{
+				"--flag1\tpersistent flag 1 description",
+				"-1\tpersistent flag 1 description",
+				"--flag2\tpersistent flag 2 description",
+				"-2\tpersistent flag 2 description",
+				"--flagG\tflag G description",
+				"-g\tflag G description",
+				"--flagI\tflag I description",
+				"-i\tflag I description",
+				"--help\thelp for child-all",
+				"-h\thelp for child-all",
+				":4",
+				"Completion ended with directive: ShellCompDirectiveNoFileComp", ""}, "\n"),
+		},
+	}
+
+	for _, tc := range testcases {
+
+		// required set to false
+		t.Run(tc.name, func(t *testing.T) {
+
+			t.Logf("Running test: %v", tc.name)
+			t.Logf("Input       : %v", tc.input)
+
+			output, err := executeCommand(getCmd(), append([]string{ShellCompRequestCmd}, tc.input...)...)
+			if err != nil {
+				t.Logf("Unexpected error: %v", err)
+				t.Fail()
+			}
+
+			if output != tc.expectedOutput {
+				t.Logf("Expected:\n%+v", tc.expectedOutput)
+				t.Logf("Got:\n%+v", output)
+				t.Fail()
+			} else {
+				// display actual output when successful.  Use with 'go test -v'
+				t.Logf("\n%+v", output)
+			}
+		})
+	}
+}
